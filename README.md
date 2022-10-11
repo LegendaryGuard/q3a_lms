@@ -4,7 +4,7 @@ Q3A Last Man Standing source code
 A Quake 3 Arena gamemode was started from the late 90s to early 2000s.
 
 <p align="center">
-<img alt="q3lms" src="" width=440 />
+<img alt="q3lms" src="https://user-images.githubusercontent.com/49716252/195073433-66257e71-5b48-43f7-b8ff-afd81884dd8f.jpg" width=450 />
 </p>
 
 ### History
@@ -32,4 +32,4 @@ Once compiled successfully, look for `pak9.pk3`, copy and paste into `baseq3/` o
 
 ### Credits
 
-SantaClaws
+[SantaClaws](https://web.archive.org/web/20030111110021/http://www.planetquake.com/crimsoft/lms/news.html)

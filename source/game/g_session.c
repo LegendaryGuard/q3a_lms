@@ -108,7 +108,8 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 
 	sess = &client->sess;
 
-	// initial team determination
+// SANTACLAWS - i commented this all out because we always want the player to start as a spectator.
+/*	// initial team determination
 	if ( g_gametype.integer >= GT_TEAM ) {
 		if ( g_teamAutoJoin.integer ) {
 			sess->sessionTeam = PickTeam( -1 );
@@ -144,8 +145,12 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 				break;
 			}
 		}
-	}
+	}*/
+// SANTACLAWS - end
 
+// SANTACLAWS - here's my replacement code... they always start as a spectator, regardless of g_gametype.
+	sess->sessionTeam = TEAM_SPECTATOR;
+// SANTACLAWS - end
 	sess->spectatorState = SPECTATOR_FREE;
 	sess->spectatorTime = level.time;
 

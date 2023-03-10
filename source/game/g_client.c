@@ -503,6 +503,10 @@ team_t TeamCount( int ignoreClientNum, int team ) {
 		if ( level.clients[i].pers.connected == CON_DISCONNECTED ) {
 			continue;
 		}
+// SANTACLAWS - prevent rounds from starting too soon
+		if ( g_gametype.integer == GT_FFA && level.clients[i].pers.connected != CON_CONNECTED )
+			continue;
+// SANTACLAWS - end
 		if ( level.clients[i].sess.sessionTeam == team ) {
 			count++;
 		}
@@ -982,7 +986,7 @@ void ClientBegin( int clientNum ) {
 		tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_IN );
 		tent->s.clientNum = ent->s.clientNum;
 
-		if ( g_gametype.integer != GT_TOURNAMENT  ) {
+		if ( g_gametype.integer != GT_TOURNAMENT && g_gametype.integer != GT_FFA) { // SANTACLAWS - added the GT_FFA check
 			trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " entered the game\n\"", client->pers.netname) );
 		}
 	}
@@ -991,6 +995,70 @@ void ClientBegin( int clientNum ) {
 	// count current clients and rank for scoreboard
 	CalculateRanks();
 }
+
+// SANTACLAWS - checks the cvars for starting values and assigns them appropriately
+void CheckStartingValues( gentity_t *ent )
+{
+	gclient_t *client;
+
+	client = ent->client;
+
+	if ((int)(g_sStartingHealth.integer) <= 0)
+		// health will count down towards max_health
+		ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] * 1.25;
+	else
+		ent->health = client->ps.stats[STAT_HEALTH] = (int)(g_sStartingHealth.integer);
+
+	if ((int)(g_sStartingArmor.integer) < 0)
+		client->ps.stats[STAT_ARMOR] = 0;
+	else
+		client->ps.stats[STAT_ARMOR] = (int)(g_sStartingArmor.integer);
+
+	if ((int)(g_sStartingWeapons.integer) & 1)
+	{
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_MACHINEGUN );
+		if ( g_gametype.integer == GT_TEAM )
+			client->ps.ammo[WP_MACHINEGUN] = 50;
+		else
+			client->ps.ammo[WP_MACHINEGUN] = 100;
+	}
+	if ((int)(g_sStartingWeapons.integer) & 2)
+	{
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_SHOTGUN );
+		client->ps.ammo[WP_SHOTGUN] = 10;
+	}
+	if ((int)(g_sStartingWeapons.integer) & 4)
+	{
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GRENADE_LAUNCHER );
+		client->ps.ammo[WP_GRENADE_LAUNCHER] = 5;
+	}
+	if ((int)(g_sStartingWeapons.integer) & 8)
+	{
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_ROCKET_LAUNCHER );
+		client->ps.ammo[WP_ROCKET_LAUNCHER] = 5;
+	}
+	if ((int)(g_sStartingWeapons.integer) & 16)
+	{
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_LIGHTNING );
+		client->ps.ammo[WP_LIGHTNING] = 60;
+	}
+	if ((int)(g_sStartingWeapons.integer) & 32) 
+	{
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_RAILGUN );
+		client->ps.ammo[WP_RAILGUN] = 10;
+	}
+	if ((int)(g_sStartingWeapons.integer) & 64)
+	{
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_PLASMAGUN );
+		client->ps.ammo[WP_PLASMAGUN] = 30;
+	}
+	if ((int)(g_sStartingWeapons.integer) & 128)
+	{
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_BFG );
+		client->ps.ammo[WP_BFG] = 15;
+ 	}
+}
+// SANTACLAWS - end
 
 /*
 ===========
@@ -1020,6 +1088,21 @@ void ClientSpawn(gentity_t *ent) {
 	index = ent - g_entities;
 	client = ent->client;
 
+// SANTACLAWS - if they are playing but there are not enough players, make them a spectator
+	if (g_gametype.integer == GT_FFA && (TeamCount( -1, TEAM_SPECTATOR) + TeamCount( -1, TEAM_FREE )) < 2 &&
+		client->sess.sessionTeam != TEAM_SPECTATOR)
+	{
+		SetTeam( ent, "s" );
+	}
+	CalculateRanks();
+
+	if (client->pers.connected == CON_CONNECTING)
+	{
+		client->pers.connected = CON_CONNECTED;
+		client->pers.enterTime = level.time;
+	}
+// SANTACLAWS - end
+
 	// find a spawn point
 	// do it before setting health back up, so farthest
 	// ranging doesn't count this client
@@ -1038,6 +1121,9 @@ void ClientSpawn(gentity_t *ent) {
 			if ( !client->pers.initialSpawn && client->pers.localClient ) {
 				client->pers.initialSpawn = qtrue;
 				spawnPoint = SelectInitialSpawnPoint( spawn_origin, spawn_angles );
+// SANTACLAWS - start
+				trap_SendServerCommand( client->ps.clientNum, "print \"Last Man Standing! v1.1b\n" S_COLOR_RED "Crimson Flame Software\n" S_COLOR_WHITE "http://www.planetquake.com/crimsoft/lms/\n\"" );
+// SANTACLAWS - end
 			} else {
 				// don't spawn near existing origin if possible
 				spawnPoint = SelectSpawnPoint ( 
@@ -1129,19 +1215,27 @@ void ClientSpawn(gentity_t *ent) {
 
 	client->ps.clientNum = index;
 	
-	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
-	if ( g_gametype.integer == GT_TEAM ) {
-		client->ps.ammo[WP_MACHINEGUN] = 50;
-	} else {
-		client->ps.ammo[WP_MACHINEGUN] = 100;
-	}
-	
-	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
+// SANTACLAWS - the machine gun is done in CheckStartingValues( ent ) now
+//	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
+//	if ( g_gametype.integer == GT_TEAM ) {
+//		client->ps.ammo[WP_MACHINEGUN] = 50;
+//	} else {
+//		client->ps.ammo[WP_MACHINEGUN] = 100;
+//	}
+// SANTACLAWS - end
+
+// SANTACLAWS - start
+//	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
+	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_GAUNTLET );
+// SANTACLAWS - end
 	client->ps.ammo[WP_GAUNTLET] = -1;
 	client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
 
-	// health will count down towards max_health
-	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] + 25;
+// SANTACLAWS - give the player the starting values determined by server config
+	CheckStartingValues( ent );
+//	// health will count down towards max_health
+//	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] * 1.25;
+// SANTACLAWS - end
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );

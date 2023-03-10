@@ -54,7 +54,7 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
 		return;
 	}
 	// no scoring during pre-match warmup
-	if ( level.warmupTime ) {
+	if ( level.warmupTime > 0) { // SANTACLAWS - changed to > 0 because it thought -1 was warmup
 		return;
 	}
 	// show score plum
@@ -383,9 +383,15 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		attacker->client->lastkilled_client = self->s.number;
 
 		if ( attacker == self || OnSameTeam (self, attacker ) ) {
-			AddScore( attacker, self->r.currentOrigin, -1 );
+// SANTACLAWS - in mode 1 we don't detract points for kills
+			if ( g_sGameType.integer == S_GT_ROUNDONLY )
+// SANTACLAWS - end
+				AddScore( attacker, self->r.currentOrigin, -1 );
 		} else {
-			AddScore( attacker, self->r.currentOrigin, 1 );
+// SANTACLAWS - in mode 1 we don't add points for kills
+			if ( g_sGameType.integer == S_GT_ROUNDONLY )
+// SANTACLAWS - end
+				AddScore( attacker, self->r.currentOrigin, 1 );
 
 			if( meansOfDeath == MOD_GAUNTLET ) {
 				
@@ -416,7 +422,10 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 		}
 	} else {
-		AddScore( self, self->r.currentOrigin, -1 );
+// SANTACLAWS - in mode 1 we don't detract points for kills
+			if ( g_sGameType.integer == S_GT_ROUNDONLY )
+// SANTACLAWS - end
+				AddScore( self, self->r.currentOrigin, -1 );
 	}
 
 	// Add team bonuses

@@ -488,13 +488,17 @@ void BroadcastTeamChange( gclient_t *client, int oldTeam )
 	} else if ( client->sess.sessionTeam == TEAM_BLUE ) {
 		trap_SendServerCommand( -1, va("cp \"%s" S_COLOR_WHITE " joined the blue team.\n\"",
 		client->pers.netname));
-	} else if ( client->sess.sessionTeam == TEAM_SPECTATOR && oldTeam != TEAM_SPECTATOR ) {
-		trap_SendServerCommand( -1, va("cp \"%s" S_COLOR_WHITE " joined the spectators.\n\"",
-		client->pers.netname));
-	} else if ( client->sess.sessionTeam == TEAM_FREE ) {
-		trap_SendServerCommand( -1, va("cp \"%s" S_COLOR_WHITE " joined the battle.\n\"",
-		client->pers.netname));
 	}
+// SANTACLAWS - start
+	return;
+//	} else if ( client->sess.sessionTeam == TEAM_SPECTATOR && oldTeam != TEAM_SPECTATOR ) {
+//		trap_SendServerCommand( -1, va("cp \"%s" S_COLOR_WHITE " joined the spectators.\n\"",
+//		client->pers.netname));
+//	} else if ( client->sess.sessionTeam == TEAM_FREE ) {
+//		trap_SendServerCommand( -1, va("cp \"%s" S_COLOR_WHITE " joined the battle.\n\"",
+//		client->pers.netname));
+//	}
+// SANTACLAWS - end
 }
 
 /*
@@ -598,13 +602,13 @@ void SetTeam( gentity_t *ent, char *s ) {
 
 	// he starts at 'base'
 	client->pers.teamState.state = TEAM_BEGIN;
-	if ( oldTeam != TEAM_SPECTATOR ) {
+/*	if ( oldTeam != TEAM_SPECTATOR ) {
 		// Kill him (makes sure he loses flags, etc)
 		ent->flags &= ~FL_GODMODE;
 		ent->client->ps.stats[STAT_HEALTH] = ent->health = 0;
 		player_die (ent, ent, ent, 100000, MOD_SUICIDE);
 
-	}
+	}*/ // santa
 	// they go to the end of the line for tournements
 	if ( team == TEAM_SPECTATOR ) {
 		client->sess.spectatorTime = level.time;
@@ -632,7 +636,12 @@ void SetTeam( gentity_t *ent, char *s ) {
 	// get and distribute relevent paramters
 	ClientUserinfoChanged( clientNum );
 
-	ClientBegin( clientNum );
+// SANTACLAWS - we call clientspawn to keep the scores now
+	if (g_sGameType.integer == S_GT_MARATHON)
+		ClientBegin( clientNum );
+	else
+		ClientSpawn( ent );
+// SANTACLAWS - end
 }
 
 /*
@@ -692,6 +701,11 @@ void Cmd_Team_f( gentity_t *ent ) {
 	}
 
 	trap_Argv( 1, s, sizeof( s ) );
+
+// SANTACLAWS - don't let spectators change to ffa once they're dead... they're free to be a spec tho.
+	if ( g_gametype.integer == GT_FFA && s[0] != 's' )
+		return;
+// SANTACLAWS - end
 
 	SetTeam( ent, s );
 

@@ -82,6 +82,25 @@ vmCvar_t	pmove_msec;
 vmCvar_t	g_rankings;
 vmCvar_t	g_listEntity;
 
+// SANTACLAWS - console variable declarations
+// banned objects
+vmCvar_t	g_sBannedItems;
+vmCvar_t	g_sBannedAmmo;
+vmCvar_t	g_sBannedWeapons;
+vmCvar_t	g_sBannedRunes;
+// starting values on player spawn
+vmCvar_t	g_sStartingWeapons;
+vmCvar_t	g_sStartingHealth;
+vmCvar_t	g_sStartingArmor;
+// gameplay variables
+vmCvar_t	g_sPlayerSpeedMultiplier;
+vmCvar_t	g_sGameType;
+vmCvar_t	g_sReward;
+
+qboolean b_sWaitingForPlayers = qfalse;
+int i_sNextWaitPrint = 0;
+// SANTACLAWS - end
+
 // bk001129 - made static to avoid aliasing
 static cvarTable_t		gameCvarTable[] = {
 	// don't override the cheat state set by the system
@@ -142,6 +161,22 @@ static cvarTable_t		gameCvarTable[] = {
 
 	{ &g_podiumDist, "g_podiumDist", "80", 0, 0, qfalse },
 	{ &g_podiumDrop, "g_podiumDrop", "70", 0, 0, qfalse },
+
+// SANTACLAWS - add in the new console variables
+	// banned objects
+	{ &g_sBannedItems, "g_sBannedItems", "0", 0, 0, qfalse },
+	{ &g_sBannedAmmo, "g_sBannedAmmo", "0", 0, 0, qfalse },
+	{ &g_sBannedWeapons, "g_sBannedWeapons", "0", 0, 0, qfalse },
+	{ &g_sBannedRunes, "g_sBannedRunes", "0", 0, 0, qfalse },
+	// starting values on player spawn
+	{ &g_sStartingWeapons, "g_sStartingWeapons", "2", 0, 0, qfalse },
+	{ &g_sStartingHealth, "g_sStartingHealth", "100", 0, 0, qfalse },
+	{ &g_sStartingArmor, "g_sStartingArmor", "0", 0, 0, qfalse },
+	// gameplay variables
+	{ &g_sPlayerSpeedMultiplier, "g_sPlayerSpeedMultiplier", "1", 0, 0, qfalse },
+	{ &g_sGameType, "g_sGameType", "1", 0, 0, qfalse }, // default to S_GT_NORMAL
+	{ &g_sReward, "g_sReward", "5", 0, 0, qfalse },
+// SANTACLAWS - end
 
 	{ &g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse },
 	{ &g_listEntity, "g_listEntity", "0", 0, 0, qfalse },
@@ -1728,6 +1763,82 @@ start = trap_Milliseconds();
 		}
 	}
 end = trap_Milliseconds();
+
+// SANTACLAWS - start
+	if (g_gametype.integer == GT_FFA)
+	{	// we're playing last man standing
+		if (g_doWarmup.integer != 0)
+			trap_SendConsoleCommand( EXEC_INSERT, "g_doWarmup 0" );
+		if ((TeamCount( -1, TEAM_SPECTATOR ) + TeamCount( -1, TEAM_FREE )) < 2)
+		{	// not enough players
+			if (level.time > i_sNextWaitPrint )
+			{
+				trap_SendServerCommand( -1, "cp \"Waiting for players.\"" );
+				i_sNextWaitPrint = level.time + 1000;
+			}
+			b_sWaitingForPlayers = qtrue;
+			level.warmupTime = -2;
+		}
+		else
+		{	// check for stuff that has happened while we're playing
+			if (TeamCount( -1, TEAM_FREE ) < 2)
+			{	// the round is finished
+				if (level.warmupTime == -1)
+				{	// the round has just been won
+					if (TeamCount( -1, TEAM_FREE ) == 1)
+					{	// there is someone left in the game -- they won
+						int i;
+						
+						for (i = 0; i < level.maxclients; i++)
+						{
+							gclient_t *cl = &level.clients[i];
+			
+							if (cl->pers.connected != CON_CONNECTED)
+								continue;
+							if (cl->sess.sessionTeam != TEAM_SPECTATOR)
+							{
+								gentity_t *ent_cl = &g_entities[ cl - level.clients ];
+								
+								AddScore( ent_cl, ent_cl->r.currentOrigin, g_sReward.integer );
+								trap_SendServerCommand( -1, va( "cp \"%s" S_COLOR_WHITE " wins.\"", cl->pers.netname ) );
+								G_LogPrintf( "ROUND: Won: %s\n", cl->pers.netname );
+							}
+						}
+					}
+					else
+					{	// no one left -- it was a tie
+						trap_SendServerCommand( -1, "cp \"Round was tied!\"" );
+						G_LogPrintf( "ROUND: Tied.\n" );
+					}
+
+					// buffer time until the next round starts
+					level.warmupTime = level.time + (g_warmup.integer - 1) * 1000;
+				}
+ 				else if ( level.time > level.warmupTime )
+				{	// time to start the next round
+					int i;
+					
+					level.warmupTime = -1;
+					for (i = 0; i < level.maxclients; i++)
+					{
+						gclient_t *client = &level.clients[i];
+		
+						if (client->pers.connected != CON_CONNECTED)
+							continue;
+						if (client->sess.sessionTeam != TEAM_FREE)
+							SetTeam( &g_entities[ client - level.clients ], "f" );
+						else if (g_sGameType.integer != S_GT_MARATHON) // if its not a marathon, then respawn this guy too
+							ClientSpawn( &g_entities[ client - level.clients ] );
+					}
+					
+					trap_SendServerCommand( -1, "cp \"FIGHT!\"" );
+					G_LogPrintf( "ROUND: Start.\n" );
+				}
+			}
+
+		}
+	}
+// SANTACLAWS - end
 
 	// see if it is time to do a tournement restart
 	CheckTournament();

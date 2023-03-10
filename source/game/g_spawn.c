@@ -276,6 +276,54 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 		return qfalse;
 	}
 
+// SANTACLAWS - don't spawn banned entities
+	if (g_sBannedWeapons.integer)	{
+		if ((((int)(g_sBannedWeapons.integer) & 1) && (Q_stricmp(ent->classname, "weapon_gauntlet")==0)) ||
+		    (((int)(g_sBannedWeapons.integer) & 2) && (Q_stricmp(ent->classname, "weapon_shotgun")==0)) ||
+		    (((int)(g_sBannedWeapons.integer) & 4) && (Q_stricmp(ent->classname, "weapon_grenadelauncher")==0)) ||
+		    (((int)(g_sBannedWeapons.integer) & 8) && (Q_stricmp(ent->classname, "weapon_rocketlauncher")==0)) ||
+		    (((int)(g_sBannedWeapons.integer) & 16) && (Q_stricmp(ent->classname, "weapon_lightning")==0)) ||
+		    (((int)(g_sBannedWeapons.integer) & 32) && (Q_stricmp(ent->classname, "weapon_railgun")==0)) ||
+		    (((int)(g_sBannedWeapons.integer) & 64) && (Q_stricmp(ent->classname, "weapon_plasmagun")==0)) ||
+		    (((int)(g_sBannedWeapons.integer) & 128) && (Q_stricmp(ent->classname, "weapon_bfg")==0))) 
+			return qfalse;
+	}
+	if (g_sBannedItems.integer)
+	{
+		if ((((int)(g_sBannedItems.integer) & 1) && (Q_stricmp(ent->classname, "item_armor_shard")==0)) ||
+		    (((int)(g_sBannedItems.integer) & 2) && (Q_stricmp(ent->classname, "item_armor_combat")==0)) ||
+		    (((int)(g_sBannedItems.integer) & 4) && (Q_stricmp(ent->classname, "item_armor_body")==0)) ||
+		    (((int)(g_sBannedItems.integer) & 8) && (Q_stricmp(ent->classname, "item_health_small")==0)) ||
+		    (((int)(g_sBannedItems.integer) & 16) && (Q_stricmp(ent->classname, "item_health")==0)) ||
+		    (((int)(g_sBannedItems.integer) & 32) && (Q_stricmp(ent->classname, "item_health_large")==0)) ||
+		    (((int)(g_sBannedItems.integer) & 64) && (Q_stricmp(ent->classname, "item_health_mega")==0)) ||
+		    (((int)(g_sBannedItems.integer) & 128) && (Q_stricmp(ent->classname, "holdable_teleporter")==0)) ||
+		    (((int)(g_sBannedItems.integer) & 256) && (Q_stricmp(ent->classname, "holdable_medkit")==0)))
+			return qfalse;
+	}
+	if (g_sBannedAmmo.integer)
+	{
+		if ((((int)(g_sBannedAmmo.integer) & 1) && (Q_stricmp(ent->classname, "ammo_shells")==0)) ||
+		    (((int)(g_sBannedAmmo.integer) & 2) && (Q_stricmp(ent->classname, "ammo_bullets")==0)) ||
+		    (((int)(g_sBannedAmmo.integer) & 4) && (Q_stricmp(ent->classname, "ammo_grenades")==0)) ||
+		    (((int)(g_sBannedAmmo.integer) & 8) && (Q_stricmp(ent->classname, "ammo_cells")==0)) ||
+		    (((int)(g_sBannedAmmo.integer) & 16) && (Q_stricmp(ent->classname, "ammo_lightning")==0)) ||
+		    (((int)(g_sBannedAmmo.integer) & 32) && (Q_stricmp(ent->classname, "ammo_rockets")==0)) ||
+		    (((int)(g_sBannedAmmo.integer) & 64) && (Q_stricmp(ent->classname, "ammo_bfg")==0)))
+			return qfalse;
+	} 
+	if (g_sBannedRunes.integer)
+	{
+		if ((((int)(g_sBannedRunes.integer) & 1) && (Q_stricmp(ent->classname, "item_haste")==0)) ||
+		    (((int)(g_sBannedRunes.integer) & 2) && (Q_stricmp(ent->classname, "item_invis")==0)) ||
+		    (((int)(g_sBannedRunes.integer) & 4) && (Q_stricmp(ent->classname, "item_regen")==0)) ||
+		    (((int)(g_sBannedRunes.integer) & 8) && (Q_stricmp(ent->classname, "item_flight")==0)) ||
+		    (((int)(g_sBannedRunes.integer) & 16) && (Q_stricmp(ent->classname, "item_quad")==0)) ||
+		    (((int)(g_sBannedRunes.integer) & 32) && (Q_stricmp(ent->classname, "item_enviro")==0)))
+			return qfalse;
+	}
+// SANTACLAWS - end
+
 	// check item spawn functions
 	for ( item=bg_itemlist+1 ; item->classname ; item++ ) {
 		if ( !strcmp(item->classname, ent->classname) ) {

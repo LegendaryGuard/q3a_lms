@@ -733,6 +733,30 @@ extern	vmCvar_t	g_enableBreath;
 extern	vmCvar_t	g_singlePlayer;
 extern	vmCvar_t	g_proxMineTimeout;
 
+// SANTACLAWS - console variable declarations
+// banned objects
+extern	vmCvar_t	g_sBannedItems;
+extern	vmCvar_t	g_sBannedAmmo;
+extern	vmCvar_t	g_sBannedWeapons;
+extern	vmCvar_t	g_sBannedRunes;
+// starting values on player spawn
+extern	vmCvar_t	g_sStartingWeapons;
+extern	vmCvar_t	g_sStartingHealth;
+extern	vmCvar_t	g_sStartingArmor;
+// gameplay variables
+extern	vmCvar_t	g_sPlayerSpeedMultiplier;
+extern	vmCvar_t	g_sReward;
+
+// LMS GameTypes
+#define S_GT_MARATHON	0
+#define S_GT_NORMAL		1
+#define S_GT_ROUNDONLY	2
+extern	vmCvar_t	g_sGameType;
+
+extern qboolean b_sWaitingFoPlayers;
+extern int i_sNextWaitPrint;
+// SANTACLAWS - end
+
 void	trap_Printf( const char *fmt );
 void	trap_Error( const char *fmt );
 int		trap_Milliseconds( void );

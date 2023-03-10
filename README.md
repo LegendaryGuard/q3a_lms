@@ -22,6 +22,41 @@ By default Overtime (OT) is used so there can be at most 1 survivor each round.
 
 Players might have multiple lives. If you set \g_lms_lives higher than 1, players will have more lives before they are out from each round: when someone is killed, he immediately returns in game (like in standard Free For All mode); when he runs out of lives, he will have to wait until the end of the round. You can see players' lives holding TAB key.
 
+### How to play
+
+Begin multiplayer and select FFA or Team DeathMatch.
+
+**Gameplay cvars**:
+
+To initialize LMS gamemode:
+
+I don't have a clear concept about this gamemode, but I'll told something: If you die, you're forced to spectate and the other players keep playing. Everytime the round ends, the player with lower health, it'll be forced to spectate.
+
+- `g_sGameType 0` marathon. 
+- `g_sGameType 1` normal. 
+- `g_sGameType 2` round only. 
+
+- `g_sReward [0-999]` reward points.
+
+- `g_sPlayerSpeedMultiplier` speed setting (a duplicated `g_speed` cvar? WTH, SantaClaws?).
+
+**Banned objects cvars**:
+
+Disable/enable items, ammo, weapons and/or runes for the gameplay.
+
+- `g_sBannedItems [0-1]`
+- `g_sBannedAmmo [0-1]`
+- `g_sBannedWeapons [0-1]`
+- `g_sBannedRunes [0-1]`
+
+**Starting values on player spawn cvars**:
+
+Put limits for weapons, health and/or armor when the player is being spawned in the game:
+
+- `g_sStartingWeapons [0-9]`
+- `g_sStartingHealth [0-999]`
+- `g_sStartingArmor [0-999]`
+
 ### How to build
 
 - ### Windows:

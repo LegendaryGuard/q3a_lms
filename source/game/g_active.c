@@ -349,6 +349,9 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 
 	// attack button cycles through spectators
 	if ( ( client->buttons & BUTTON_ATTACK ) && ! ( client->oldbuttons & BUTTON_ATTACK ) ) {
+// SANTACLAWS - start
+		client->oldbuttons |= BUTTON_ATTACK;
+// SANTACLAWS - end
 		Cmd_FollowCycle_f( ent, 1 );
 	}
 }
@@ -607,6 +610,15 @@ void ClientThink_real( gentity_t *ent ) {
 	if (client->pers.connected != CON_CONNECTED) {
 		return;
 	}
+
+// SANTACLAWS - if they are playing but there are not enough players, make them a spectator
+	if (g_gametype.integer == GT_FFA && (TeamCount( -1, TEAM_SPECTATOR) + TeamCount( -1, TEAM_FREE )) < 2 &&
+		client->sess.sessionTeam != TEAM_SPECTATOR)
+	{
+		SetTeam( ent, "s" );
+	}
+// SANTACLAWS - end
+
 	// mark the time, so the connection sprite can be removed
 	ucmd = &ent->client->pers.cmd;
 
@@ -682,6 +694,9 @@ void ClientThink_real( gentity_t *ent ) {
 
 	// set speed
 	client->ps.speed = g_speed.value;
+// SANTACLAWS - calculate in the admin's speed setting
+	client->ps.speed *= g_sPlayerSpeedMultiplier.value;
+// SANTACLAWS - end
 
 	if ( client->ps.powerups[PW_HASTE] ) {
 		client->ps.speed *= 1.3;
@@ -790,6 +805,14 @@ void ClientThink_real( gentity_t *ent ) {
 	if ( client->ps.stats[STAT_HEALTH] <= 0 ) {
 		// wait for the attack button to be pressed
 		if ( level.time > client->respawnTime ) {
+// SANTACLAWS - start
+			if (client->sess.sessionTeam != TEAM_SPECTATOR)
+			{
+				SetTeam( ent, "s" );
+
+				return;
+			}
+// SANTACLAWS - end
 			// forcerespawn is to prevent users from waiting out powerups
 			if ( g_forcerespawn.integer > 0 && 
 				( level.time - client->respawnTime ) > g_forcerespawn.integer * 1000 ) {
